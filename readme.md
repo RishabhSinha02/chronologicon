@@ -4,6 +4,10 @@ Chronologicon Engine is a Node.js + Express backend that ingests historical even
 
 ---
 
+[➡️ **Full API Documentation (Postman)**](https://documenter.getpostman.com/view/22705072/2sB34mhHaR)
+
+---
+
 ## 🚀 Features
 - **Ingest events** from a pipe-separated data file with error handling
 - **Timeline** view of nested parent-child events
