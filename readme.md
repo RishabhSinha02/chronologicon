@@ -51,20 +51,11 @@ PORT=3000
 ```
 
 ### 4️⃣ Create database
-```sql
-CREATE DATABASE chronologicon;
-\c chronologicon
-CREATE TABLE historical_events (
-  event_id UUID PRIMARY KEY,
-  event_name TEXT NOT NULL,
-  description TEXT,
-  start_date TIMESTAMPTZ,
-  end_date TIMESTAMPTZ,
-  duration_minutes INT,
-  parent_event_id UUID REFERENCES historical_events(event_id),
-  metadata JSONB
-);
+- Create the database and table by running the provided SQL script:
+```bash
+psql -U <your-db-user> -d postgres -f db_schema.sql
 ```
+This will create the `chronologicon` database and the `historical_events` table.
 
 ### 5️⃣ Run the server
 ```bash
