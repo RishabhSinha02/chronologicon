@@ -69,20 +69,35 @@ Server will start on: http://localhost:3000
 
 ### ▶️ Ingest Events
 - **POST** `/api/events/ingest`
-  - **Body:**
+  - **Description:** Initiates the ingestion of historical event data from a provided text file. Supports both file upload (multipart/form-data) and server file path (JSON body).
+  - **Request:**
+    - **Option 1: File Upload**
+      - Headers: `Content-Type: multipart/form-data`
+      - Body: `datafile` (file field)
+      - **Example:**
+        ```bash
+        curl -X POST http://localhost:3000/api/events/ingest \
+          -F "datafile=@/absolute/path/to/sample-data.txt"
+        ```
+    - **Option 2: Server File Path**
+      - Headers: `Content-Type: application/json`
+      - Body:
+        ```json
+        { "filePath": "/absolute/path/to/sample-data.txt" }
+        ```
+      - **Example:**
+        ```bash
+        curl -X POST http://localhost:3000/api/events/ingest \
+          -H "Content-Type: application/json" \
+          -d '{"filePath": "/absolute/path/to/sample-data.txt"}'
+        ```
+  - **Response (202 Accepted):**
     ```json
-    { "filePath": "/absolute/path/to/data.txt" }
-    ```
-  - **Description:** Ingests events from a pipe-separated data file.
-  - **Response:**
-    ```json
-    { "jobId": "uuid-string", "status": "started" }
-    ```
-  - **Example:**
-    ```bash
-    curl -X POST http://localhost:3000/api/events/ingest \
-      -H "Content-Type: application/json" \
-      -d '{"filePath": "/Users/you/data.txt"}'
+    {
+      "status": "Ingestion initiated",
+      "jobId": "ingest-job-12345-abcde",
+      "message": "Check /api/events/ingestion-status/ingest-job-12345-abcde for updates."
+    }
     ```
 
 - **GET** `/api/events/ingestion-status/:jobId`
@@ -169,30 +184,3 @@ Server will start on: http://localhost:3000
     ```bash
     curl "http://localhost:3000/api/events/insights/event-influence?source=123e4567-e89b-12d3-a456-426614174000&target=789e4567-e89b-12d3-a456-426614174999"
     ```
-
----
-
-## 📝 Key Design Choices & Concepts
-
-- **Node.js + Express:** Chosen for rapid API development and async I/O, ideal for data ingestion and serving HTTP endpoints.
-- **PostgreSQL:** Used for its strong relational and JSONB support, enabling flexible event metadata and efficient queries for timelines and insights.
-- **Ingestion:** Reads a pipe-separated file, validates data, and inserts events in bulk with error handling. Each ingestion is tracked by a job ID for status monitoring.
-- **Timeline:** Events can have parent-child relationships (self-referencing foreign key). Timeline endpoint recursively builds a tree from any root event.
-- **Search:** Supports filtering, pagination, and sorting using SQL queries. Flexible query params allow for complex searches.
-- **Insights:**
-  - *Overlapping Events:* Finds events with intersecting time ranges.
-  - *Temporal Gaps:* Calculates largest gaps between consecutive events.
-  - *Event Influence:* Uses graph traversal (BFS/DFS) to find shortest parent-child path between two events.
-- **Error Handling:** All endpoints return clear error messages and HTTP status codes. Ingestion errors are reported per job.
-- **Environment Config:** Uses dotenv for easy environment variable management.
-- **Sample Data:** Provided for easy testing and demonstration.
-
----
-
-## ✅ Example Data
-A sample data file with `|` separated fields is provided in `sample_data/` to test ingestion.
-
----
-
-## 📄 License
-This project is for technical assessment/demo purposes.

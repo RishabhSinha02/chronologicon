@@ -5,17 +5,24 @@ const pool = require('../db');
 const jobs = {};
 
 exports.ingestEvents = async (req, res) => {
-  const { filePath } = req.body;
-  if (!filePath) {
-    return res.status(400).json({ error: 'filePath is required' });
+  // Support both file upload and filePath
+  let filePath;
+  let shouldDelete = false;
+  if (req.file) {
+    filePath = req.file.path;
+    shouldDelete = true;
+  } else if (req.body.filePath) {
+    filePath = req.body.filePath;
+  } else {
+    return res.status(400).json({ error: 'Provide a file upload (datafile) or a filePath in the request body.' });
   }
   const jobId = `job-${Date.now()}`;
   jobs[jobId] = { status: 'PROCESSING', processedLines: 0, errorLines: 0, errors: [] };
-  processFile(filePath, jobId);
-  res.status(202).json({ status: 'Ingestion started', jobId, message: `Check /api/events/ingestion-status/${jobId} for progress` });
+  processFile(filePath, jobId, shouldDelete);
+  res.status(202).json({ status: 'Ingestion initiated', jobId, message: `Check /api/events/ingestion-status/${jobId} for updates.` });
 };
 
-async function processFile(filePath, jobId) {
+async function processFile(filePath, jobId, shouldDelete) {
   try {
     const lines = fs.readFileSync(filePath, 'utf-8').split('\n').filter(Boolean);
     for (let i = 0; i < lines.length; i++) {
@@ -55,6 +62,14 @@ async function processFile(filePath, jobId) {
   } catch (err) {
     jobs[jobId].status = 'FAILED';
     jobs[jobId].errors.push(`File read error: ${err.message}`);
+  } finally {
+    if (shouldDelete) {
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Failed to delete uploaded file:', err);
+        }
+      });
+    }
   }
 }
 
